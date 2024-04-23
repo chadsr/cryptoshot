@@ -4,7 +4,7 @@ from .exceptions import LoadConfigException
 from .types import Config
 
 
-def get_config(config_path: str) -> Config:
+def load_config(config_path: str) -> Config:
     try:
         with open(config_path, "r") as config_file:
             config: Config = json.load(config_file)

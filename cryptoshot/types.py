@@ -1,6 +1,10 @@
-from datetime import datetime
-from typing import TypedDict, TypeAlias
+from typing import TypedDict, TypeAlias, NotRequired
 from enum import Enum
+from collections.abc import Mapping
+
+HttpHeaders: TypeAlias = Mapping[str, str | bytes | None]
+JSON: TypeAlias = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
+URL: TypeAlias = str
 
 
 class ChainID(Enum):
@@ -17,30 +21,31 @@ class AssetType(Enum):
 
 
 class AddressType(Enum):
-    AVAX_P_CHAIN = "avax_p"
-    AVAX_X_CHAIN = "avax_x"
+    AVAX = "avax"
     ETHEREUM = "eth"
     POLKADOT = "dot"
 
 
 ServiceID: TypeAlias = str
+AssetID: TypeAlias = str
 
 
 class PriceOracleID(Enum):
-    COINGECKO: ServiceID = "coingecko"
-    KRAKEN: ServiceID = "kraken"
+    COINAPI = "coinapi"
+    COINGECKO = "coingecko"
+    KRAKEN = "kraken"
 
 
 class BalanceOracleID(Enum):
-    ALCHEMY: ServiceID = "alchemy"
-    AVALANCHE: ServiceID = "avalanche_explorer"
-    ETHERSCAN: ServiceID = "etherscan_mainnet"
-    GNOSISSCAN: ServiceID = "gnosisscan"
-    KRAKEN: ServiceID = "kraken"
+    ALCHEMY = "alchemy"
+    AVALANCHE = "avalanche_explorer"
+    ETHERSCAN = "etherscan_mainnet"
+    GNOSISSCAN = "gnosisscan"
+    KRAKEN = "kraken"
 
 
 class ServiceConfig(TypedDict):
-    id: ServiceID
+    type: ServiceID
     api_token: str
 
 
@@ -55,7 +60,7 @@ class AccountConfig(TypedDict):
 
 
 class PriceOracleConfig(TypedDict):
-    base_currency: str
+    quote_asset: AssetID
     priority: list[ServiceID]
 
 
@@ -63,25 +68,51 @@ class FormattingConfig(TypedDict):
     timestamp: str
 
 
+AssetGrouping: TypeAlias = list[AssetID]
+
+
+class AssetsConfig(TypedDict):
+    include: list[AssetID]
+    exclude: list[AssetID]
+    group: dict[AssetID, AssetGrouping]
+
+
 class Config(TypedDict):
-    services: list[ServiceConfig]
+    services: dict[str, ServiceConfig]
     accounts: list[AccountConfig]
+    assets: AssetsConfig
     price_oracle: PriceOracleConfig
     formatting: FormattingConfig
 
 
 class Asset(TypedDict):
-    id: str
+    id: AssetID
     name: str
-    type: AssetType
-    decimals: int
-    chain_id: ChainID
+    type: NotRequired[AssetType]
+    decimals: NotRequired[int]
+    chain_id: NotRequired[ChainID]
 
 
-class Balance(TypedDict):
+class AssetValue(TypedDict):
+    asset: Asset
+    value: float
+    quote_asset: AssetID
+
+
+class AssetValueAtTime(AssetValue):
+    timestamp: int
+
+
+class AssetBalance(TypedDict):
     asset: Asset
     value: int
 
 
-class BalanceAtTime(Balance):
-    time: datetime
+class AssetBalanceAtTime(AssetBalance):
+    timestamp: int
+
+
+Assets: TypeAlias = dict[AssetID, Asset]
+AssetPairs: TypeAlias = dict[AssetID, set[AssetID | AssetID]]
+
+Prices: TypeAlias = dict[AssetID, dict[ServiceID, AssetValueAtTime]]
