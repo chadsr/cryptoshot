@@ -2,6 +2,7 @@ from datetime import datetime
 from calendar import timegm
 from zoneinfo import ZoneInfo, available_timezones
 import csv
+import json
 
 from .types import Prices
 from .exceptions import InvalidTimeZoneException
@@ -35,3 +36,8 @@ def prices_to_csv(prices: Prices, file_path: str):
         w = csv.DictWriter(f, csv_dict_sorted.keys())
         w.writeheader()
         w.writerow(csv_dict_sorted)
+
+
+def dict_to_json(dict_obj: dict, file_path: str):
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(dict_obj, f, ensure_ascii=False, sort_keys=True, indent=4)
