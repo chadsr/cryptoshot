@@ -5,13 +5,12 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from .__init__ import __version__, __description__
-from .utils import prices_to_csv, timezones, unix_timestamp_seconds_from_str
+from .utils import dict_to_json, prices_to_csv, timezones, unix_timestamp_seconds_from_str
 from .cryptoshot import Cryptoshot
 from .config import load_config
-from .logger import LoggerAdapter
+from .logger import LOGGER, LoggerAdapter
 from .exceptions import CryptoshotException
 
-logger = logging.getLogger("rich")
 
 DEFAULT_CONFIG_PATH = "./config.json"
 DEFAULT_DATETIME_STRING_FORMAT: str = "%d-%m-%Y/%H:%M:%S"
@@ -25,7 +24,10 @@ def print_timezones(args: argparse.Namespace) -> None:
 
 def get(args: argparse.Namespace) -> None:
     log_level: int = args.log_level
-    log = LoggerAdapter(logger)
+    for name in logging.root.manager.loggerDict:
+        logging.getLogger(name).setLevel(log_level)
+
+    log = LoggerAdapter(LOGGER)
     log.setLevel(log_level)
 
     config_path: str = args.config_path
@@ -43,6 +45,7 @@ def get(args: argparse.Namespace) -> None:
 
     show_prices: bool = args.prices
     show_balances: bool = args.balances
+    save_to_json: bool = args.json
     save_to_csv: bool = args.csv
 
     try:
@@ -50,17 +53,27 @@ def get(args: argparse.Namespace) -> None:
             config=config, logger=log.logger, timestamp_unix_seconds=timestamp_unix_seconds
         )
 
+        file_path_format = f"{date_time}_{datetime.now(tz=ZoneInfo(timezone)).isoformat()}"
         if show_balances:
             balances = cryptoshot.balances()
             print(balances)
+
+            balances_file_path = "./balances"
+            if save_to_json:
+                json_path = f"{balances_file_path}_{file_path_format}.json"
+                dict_to_json(balances, json_path)
+
         if show_prices:
             prices = cryptoshot.prices()
             print(prices)
 
+            prices_file_path = "./prices"
+            if save_to_json:
+                json_path = f"{prices_file_path}_{file_path_format}.json"
+                dict_to_json(prices, json_path)
+
             if save_to_csv:
-                csv_path = (
-                    f"./prices_{date_time}_{datetime.now(tz=ZoneInfo(timezone)).isoformat()}.csv"
-                )
+                csv_path = f"{prices_file_path}_{file_path_format}.csv"
                 prices_to_csv(prices, csv_path)
 
     except CryptoshotException as e:
@@ -123,6 +136,13 @@ def init_argparse() -> argparse.ArgumentParser:
         default=False,
         action=argparse.BooleanOptionalAction,
         help="Save output to CSV file",
+    )
+    run_parser.add_argument(
+        "-j",
+        "--json",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="Save output to JSON file",
     )
 
     timezone_parser = sub_parsers.add_parser("timezones", help="List valid timezone strings")

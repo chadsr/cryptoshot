@@ -3,6 +3,7 @@ from rich.logging import RichHandler
 
 FORMAT = "%(message)s"
 logging.basicConfig(level="NOTSET", format=FORMAT, datefmt="[%X]", handlers=[RichHandler()])
+LOGGER = logging.getLogger("rich")
 
 
 class LoggerAdapter(logging.LoggerAdapter):
