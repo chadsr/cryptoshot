@@ -12,7 +12,7 @@ cryptoshot = "cryptoshot.__main__:main"
 [tool.poetry.dependencies]
 python = "^3.11"
 requests = "^2.32.3"
-rich = "^13.7.1"
+rich = "^13.8.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
