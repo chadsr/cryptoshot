@@ -95,9 +95,7 @@ class CoinAPI(PriceOracleApiInterface):
         params = {"time": timestamp_str}
 
         try:
-            res_exchangerate = get_json_request(
-                url=url, params=params, headers=self.__auth_headers
-            )
+            res_exchangerate = get_json_request(url=url, params=params, headers=self.__auth_headers)
             res_exchangerate = cast(ResponseExchangeRate, res_exchangerate)
 
             asset_value = res_exchangerate["rate"]

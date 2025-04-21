@@ -27,7 +27,13 @@ from ...services.types import (
 )
 
 from .interfaces import BalanceOracleApiInterface
-from .exceptions import ApiException, ApiUnavailableException, RequestException
+from .exceptions import (
+    ApiException,
+    ApiUnavailableException,
+    ApiRateLimitException,
+    RequestException,
+    TooManyRequestsException,
+)
 from .requests import HEADERS_JSON, get_json_request, post_json_request
 
 ROUTESCAN_API_BASE_URL = "https://api.routescan.io/v2"
@@ -168,7 +174,7 @@ class RoutescanAPI(BalanceOracleApiInterface):
             case ResponseRoutescanEtherscanApiError.NO_CLOSEST_BLOCK:
                 raise NoClosestBlockException()
             case _:
-                raise ApiException(f"unexpected error response: {response["message"]}")
+                raise ApiException(f"unexpected error response: {response['message']}")
 
     def __get_blocknumber_at(
         self, chain_id: EVMChainID, timestamp_unix_seconds: int
@@ -196,6 +202,8 @@ class RoutescanAPI(BalanceOracleApiInterface):
 
             return int(block_number)
 
+        except TooManyRequestsException as e:
+            raise ApiRateLimitException(e)
         except RequestException as e:
             raise BalanceOracleException(e)
 
