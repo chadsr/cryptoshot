@@ -340,9 +340,7 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
             raise PriceOracleException(e)
 
     def __wait_requests(self, wait_time_seconds: float):
-        self.__log__.warn(
-            f"API rate-limit hit. waiting {wait_time_seconds}s until next request..."
-        )
+        self.__log__.warn(f"API rate-limit hit. waiting {wait_time_seconds}s until next request...")
         time.sleep(wait_time_seconds)
 
     def value_at(self, asset_id, quote_asset_id, timestamp_unix_seconds) -> AssetValueAtTime:
