@@ -2,19 +2,19 @@
     "services": [
         {"name": "kraken1", "type": "kraken", "api_token": "apitoken", "private_key": "privatekey"},
         {"name": "coinapi1", "type": "coinapi", "api_token": "apitokenn"},
-        {"name": "coingecko1", "type": "coingecko", "api_token": "apitoken"},
+        {"name": "coingecko1", "type": "coingecko", "api_token": "apitoken"}
     ],
     "accounts": [
         {
             "name": "MyAccount",
             "address": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
-            "type": "evm",
+            "type": "evm"
         }
     ],
     "assets": {
         "include": ["BTC", "BCH", "ETH", "DOT", "KSM", "USDT"],
         "exclude": [],
-        "group": {"BTC": ["XBT"]},
+        "group": {"BTC": ["XBT"]}
     },
     "price_oracle": {"quote_asset": "EUR", "priority": ["kraken1", "coinapi1", "coingecko1"]},
     "formatting": {"timestamp": "%d-%m-%YT%H:%M:%S"}
