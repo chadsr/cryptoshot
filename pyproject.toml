@@ -1,32 +1,25 @@
-[tool.poetry]
+[project]
 name = "cryptoshot"
 version = "0.1.0"
-license = "GPLv3"
 description = "Retrieve cryptocurrency balances and values at a specific point in time"
-authors = ["Ross <git@ross.ch>"]
+authors = [{ name = "Ross", email = "git@ross.ch" }]
+license = { text = "GPLv3" }
 readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["requests (>=2.32.3,<3.0.0)", "rich (>=14.0.0,<15.0.0)"]
 
-[project.scripts]
-cryptoshot = "cryptoshot.__main__:main"
-
-[tool.poetry.dependencies]
-python = "^3.11"
-requests = "^2.32.3"
-rich = "^13.9.4"
+[tool.poetry]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
-pytest-cov = "^6.0.0"
-pandas = "^2.2.3"
+pytest-cov = "^6.1.1"
+ruff = "^0.11.6"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-line-length = 99
-
-[tool.black]
 line-length = 99
 
 [tool.isort]
