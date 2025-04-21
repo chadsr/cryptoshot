@@ -18,7 +18,7 @@ from ...services.types import (
 )
 
 from .interfaces import PriceOracleApiInterface
-from .exceptions import RequestException
+from .exceptions import ApiRateLimitException, RequestException, TooManyRequestsException
 from .requests import HEADERS_JSON, get_json_request
 
 COINAPI_BASE_URL = "https://rest.coinapi.io/v1"
@@ -69,7 +69,10 @@ class CoinAPI(PriceOracleApiInterface):
             for asset in res_assets:
                 if asset["type_is_crypto"] == TypeIsCrypto.TRUE:
                     asset_id = asset["asset_id"]
-                    asset_name = asset["name"]
+                    asset_name = asset_id
+                    if "name" in asset:
+                        asset_name = asset["name"]
+
                     assets[asset_id] = {
                         "id": asset_id,
                         "name": asset_name,
@@ -77,6 +80,8 @@ class CoinAPI(PriceOracleApiInterface):
                     }
 
             return assets
+        except TooManyRequestsException as e:
+            raise ApiRateLimitException(e)
         except RequestException as e:
             raise PriceOracleException(e)
 
