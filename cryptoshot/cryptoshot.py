@@ -17,6 +17,7 @@ from .services.interfaces import (
     BalanceProviderInterface,
 )
 from .services.exceptions import (
+    BalanceOracleException,
     InvalidServiceConfigException,
     NoBalancesFoundException,
     NoValueFoundException,
@@ -66,13 +67,13 @@ class Cryptoshot:
             service_type = service_config["type"]
 
             if service_type not in SERVICES:
-                self.__log__.warn(
+                self.__log__.warning(
                     f"service name '{service_name}' of type '{service_type}' is not a supported type'"
                 )
                 continue
 
             if service_name in self.__services:
-                self.__log__.warn(
+                self.__log__.warning(
                     f"service name '{service_name}' of type '{service_type}' already initialised. Is the service name duplicated in the config?"
                 )
                 continue
@@ -83,7 +84,7 @@ class Cryptoshot:
                 service = service_class(config=service_config, log=self.__log__)
                 self.__services[service_name] = service
             except ApiRateLimitException:
-                self.__log__.warn(f"service '{service_name}' is rate-limited. skipping.")
+                self.__log__.warning(f"service '{service_name}' is rate-limited. skipping.")
                 continue
 
     def __add_balances_at_time(
@@ -135,8 +136,13 @@ class Cryptoshot:
                             service_name, balances_at_time, balances
                         )
                     except NoBalancesFoundException as e:
-                        self.__log__.warn(
+                        self.__log__.warning(
                             f"no balances found with service '{service_name}' for address {account['address']}: {e}"
+                        )
+                        continue
+                    except BalanceOracleException as e:
+                        self.__log__.error(
+                            f"could not fetch balances from service '{service_name}' for address {account['address']}: {e}"
                         )
                         continue
 
@@ -174,7 +180,7 @@ class Cryptoshot:
         asset_ids: list[AssetID] = []
         for asset_id in self.__asset_ids_include:
             if asset_id in self.__asset_ids_exclude:
-                self.__log__.warn(f"Asset '{asset_id} is both included and excluded!")
+                self.__log__.warning(f"Asset '{asset_id} is both included and excluded!")
                 continue
 
             asset_ids.append(asset_id)
@@ -222,17 +228,17 @@ class Cryptoshot:
 
                     prices[asset_id][price_oracle_name] = asset_value
                 except NoValueFoundException as e:
-                    self.__log__.warn(
+                    self.__log__.warning(
                         f"No usable value found for asset pair {asset_id}/{quote_asset_id} for service {price_oracle_name}: {e}"
                     )
                     continue
                 except UnsupportedAssetIDException:
-                    self.__log__.warn(
+                    self.__log__.warning(
                         f"Unsupported asset {price_oracle_asset_id} for service '{price_oracle_name}'"
                     )
                     continue
                 except UnsupportedQuoteAssetIDException:
-                    self.__log__.warn(
+                    self.__log__.warning(
                         f"Unsupported asset pair {price_oracle_asset_id}/{quote_asset_id} for service '{price_oracle_name}'"
                     )
                     continue
