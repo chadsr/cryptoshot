@@ -70,7 +70,7 @@
 
 #                 if asset_class == KrakenAssetClass.CURRENCY.value:
 #                     if asset_id in assets:
-#                         self.__log__.warn(f"Asset '{asset_id}' already indexed")
+#                         self.__log__.warning(f"Asset '{asset_id}' already indexed")
 
 #                     asset_name = asset_info["altname"]
 #                     asset_decimals = asset_info["decimals"]

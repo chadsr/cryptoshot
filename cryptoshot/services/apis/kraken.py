@@ -284,7 +284,7 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
 
             if asset_class == KrakenAssetClass.CURRENCY:
                 if asset_id in assets:
-                    self.__log__.warn(f"Asset '{asset_id}' already indexed")
+                    self.__log__.warning(f"Asset '{asset_id}' already indexed")
 
                 asset_name = asset_info["altname"]
                 asset_decimals = asset_info["decimals"]
@@ -340,7 +340,9 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
             raise PriceOracleException(e)
 
     def __wait_requests(self, wait_time_seconds: float):
-        self.__log__.warn(f"API rate-limit hit. waiting {wait_time_seconds}s until next request...")
+        self.__log__.warning(
+            f"API rate-limit hit. waiting {wait_time_seconds}s until next request..."
+        )
         time.sleep(wait_time_seconds)
 
     def value_at(self, asset_id, quote_asset_id, timestamp_unix_seconds) -> AssetValueAtTime:
@@ -400,7 +402,7 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
 
                     if trade_timestamp_seconds < offset_timestamp_unix_seconds:
                         # This really shouldn't happen, but handle it anyway
-                        self.__log__.warn(
+                        self.__log__.warning(
                             f"Trade is older than the offset timestamp ({trade_timestamp_seconds} < {offset_timestamp_unix_seconds})"
                         )
                         continue
@@ -561,12 +563,12 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
                 if ledger_entry_id not in ledger_entries:
                     ledger_entries[ledger_entry_id] = ledger_entry
                 else:
-                    self.__log__.warn(f"ledger entry '{ledger_entry_id}' already processed")
+                    self.__log__.warning(f"ledger entry '{ledger_entry_id}' already processed")
 
             page_ledger_count = ledger_info["result"]["count"]
             if ledger_entry_count != page_ledger_count:
                 if ledger_entry_count:
-                    self.__log__.warn(
+                    self.__log__.warning(
                         f"Ledger entry count changed from {ledger_entry_count} to {page_ledger_count}"
                     )
 
@@ -624,7 +626,7 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
                 if entry_kraken_asset_id_stripped in self.__assets__:
                     asset_id = entry_kraken_asset_id_stripped
                 elif entry_kraken_asset_id_stripped not in delisted_kraken_ids:
-                    self.__log__.warn(
+                    self.__log__.warning(
                         f"Asset {entry_kraken_asset_id_stripped} is not listed as supported. It is probably de-listed. skipping."
                     )
                     delisted_kraken_ids.append(entry_kraken_asset_id_stripped)
