@@ -9,7 +9,6 @@ import hmac
 import base64
 
 from ...services.exceptions import (
-    BalanceOracleException,
     BalanceProviderException,
     NoSupportedAssetsException,
     NoSupportedAssetsPairsException,
@@ -37,7 +36,7 @@ from .exceptions import (
     RequestException,
     TooManyRequestsException,
 )
-from .requests import HEADERS_JSON, HEADERS_URL_ENCODED, get_json_request, post_json_request
+from .requestutils import HEADERS_JSON, HEADERS_URL_ENCODED, get_json_request, post_json_request
 
 KRAKEN_API_BASE_URL = "https://api.kraken.com"
 KRAKEN_API_VERSION_PATH = "/0"
@@ -270,7 +269,7 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
             res_assets = get_json_request(url=url, headers=self.__auth_headers_json)
             return cast(ResponseAssets, res_assets)
         except RequestException as e:
-            raise PriceOracleException(e)
+            raise PriceOracleException(e) from e
 
     def __get_assets(self, res_assets: ResponseAssets) -> Assets:
         assets: Assets = {}
@@ -337,7 +336,7 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
 
             return available_asset_pairs
         except RequestException as e:
-            raise PriceOracleException(e)
+            raise PriceOracleException(e) from e
 
     def __wait_requests(self, wait_time_seconds: float):
         self.__log__.warning(
@@ -444,7 +443,7 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
                         self.__wait_requests(wait_time_seconds)
                         continue
 
-                raise PriceOracleException(e)
+                raise PriceOracleException(e) from e
 
         if asset_value_at_time is None:
             raise PriceOracleException("no asset value found")
@@ -496,7 +495,7 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
         except RequestException as e:
             if e.error_messages:
                 if KrakenResponseError.INVALID_KEY in e.error_messages:
-                    raise InvalidAPIKeyException(e)
+                    raise InvalidAPIKeyException(e) from e
                 elif (
                     KrakenResponseError.TOO_MANY_REQUESTS in e.error_messages
                     or KrakenResponseError.RATE_LIMIT_EXCEEDED in e.error_messages
@@ -507,19 +506,19 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
                         result=e.result_json,
                         error_messages=e.error_messages,
                         exception=e,
-                    )
+                    ) from e
 
-            raise BalanceProviderException(e)
+            raise BalanceProviderException(e) from e
 
-    def __asset_id_to_kraken_id(self, asset_id: AssetID) -> KrakenAssetID:
-        if asset_id not in self.__assets__:
-            raise UnsupportedAssetIDException(asset_id)
+    # def __asset_id_to_kraken_id(self, asset_id: AssetID) -> KrakenAssetID:
+    #     if asset_id not in self.__assets__:
+    #         raise UnsupportedAssetIDException(asset_id)
 
-        asset = self.__assets__[asset_id]
-        if "platform_id" not in asset:
-            raise BalanceOracleException("no platform_id found")
+    #     asset = self.__assets__[asset_id]
+    #     if "platform_id" not in asset:
+    #         raise BalanceOracleException("no platform_id found")
 
-        return asset["platform_id"]
+    #     return asset["platform_id"]
 
     def __kraken_id_to_asset_id(self, kraken_asset_id: KrakenAssetID) -> AssetID:
         if kraken_asset_id not in self.__kraken_assets:
@@ -593,7 +592,7 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
         while suffix_offset < len(kraken_asset_id):
             suffix = kraken_asset_id[suffix_offset:]
             if suffix in suffix_set:
-                return suffix
+                return cast(KrakenLedgerAssetSuffix, suffix)
 
             suffix_offset += 1
 

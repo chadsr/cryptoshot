@@ -17,7 +17,7 @@ DEFAULT_DATETIME_STRING_FORMAT: str = "%d-%m-%Y/%H:%M:%S"
 DEFAULT_DATETIME_STRING: str = datetime.now().strftime(DEFAULT_DATETIME_STRING_FORMAT)
 
 
-def print_timezones(args: argparse.Namespace) -> None:
+def print_timezones() -> None:
     tzs = timezones()
     print(*tzs, sep="\n")
 

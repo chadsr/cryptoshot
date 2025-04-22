@@ -23,7 +23,7 @@ from ...services.exceptions import (
 
 from .interfaces import PriceOracleApiInterface
 from .exceptions import ApiRateLimitException, RequestException, TooManyRequestsException
-from .requests import HEADERS_JSON, get_json_request
+from .requestutils import HEADERS_JSON, get_json_request
 
 COINGECKO_API_BASE_URL = "https://api.coingecko.com/api/v3"
 
