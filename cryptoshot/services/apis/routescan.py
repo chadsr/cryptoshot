@@ -1,6 +1,7 @@
 from enum import StrEnum
 from logging import Logger
-from typing import NotRequired, TypedDict, cast
+import time
+from typing import NotRequired, TypedDict, cast, Any
 
 from ...services.constants import EVM_BASE_ASSET_DECIMALS
 from ...services.exceptions import (
@@ -12,6 +13,7 @@ from ...services.exceptions import (
     ZeroBalanceException,
 )
 from ...services.types import (
+    JSON,
     AccountAddress,
     Address,
     AddressType,
@@ -30,14 +32,12 @@ from .interfaces import BalanceOracleApiInterface
 from .exceptions import (
     ApiException,
     ApiUnavailableException,
-    ApiRateLimitException,
     RequestException,
-    TooManyRequestsException,
 )
 from .requests import HEADERS_JSON, get_json_request, post_json_request
 
 ROUTESCAN_API_BASE_URL = "https://api.routescan.io/v2"
-ROUTESCAN_CDN_BASE_URL = "https://cdn.routescan.io"
+# ROUTESCAN_CDN_BASE_URL = "https://cdn.routescan.io"
 
 
 class RoutescanNetworkType(StrEnum):
@@ -110,6 +110,8 @@ class ParamsRoutescanEtherscanApi(TypedDict):
 # https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/api?module=account&action=tokentx&contractaddress=0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7&address=0x77134cbC06cB00b66F4c7e623D5fdBF6777635EC&page=1&offset=100&startblock=34372864&endblock=34472864&sort=asc&apikey=YourApiKeyToken
 # https://api.routescan.io/v2/network/mainnet/evm/1/etherscan/api?module=account&action=tokenbalancehistory&contractaddress=0x57d90b64a1a57749b0f932f1a3395792e12e7055&address=0xe04f27eb70e025b78871a2ad7eabe85e61212761&blockno=8000000&apikey=YourApiKeyToken
 
+REQUESTS_PER_SECOND = 1
+
 
 class RoutescanAPI(BalanceOracleApiInterface):
     def __init__(self, config: ApiConfig, log: Logger) -> None:
@@ -117,10 +119,12 @@ class RoutescanAPI(BalanceOracleApiInterface):
         self.__base_url_api: str = (
             f"{ROUTESCAN_API_BASE_URL}/network/{RoutescanNetworkType.MAINNET}/evm"
         )
-        self.__base_url_cdn: str = f"{ROUTESCAN_CDN_BASE_URL}/api/evm"
+        # self.__base_url_cdn: str = f"{ROUTESCAN_CDN_BASE_URL}/api/evm"
 
         self.__auth_headers: HttpHeaders = {}
         self.__auth_headers.update(HEADERS_JSON)
+
+        self.__last_request_time: None | float = None
 
         self.__supported_address_types = set()
         self.__supported_address_types.update([AddressType.EVM])
@@ -130,12 +134,38 @@ class RoutescanAPI(BalanceOracleApiInterface):
     def supported_address_types(self) -> set[AddressType]:
         return self.__supported_address_types
 
+    def __wait_for_request(self):
+        time_now = time.time()
+
+        if self.__last_request_time is not None:
+            diff_seconds = time_now - self.__last_request_time
+            if diff_seconds <= (1 / REQUESTS_PER_SECOND):
+                self.__log__.debug("waiting until next request...")
+                time.sleep(1 / REQUESTS_PER_SECOND)
+
+        time_now = time.time()
+        self.__last_request_time = time_now
+
+    def __get_json_request_wait(
+        self,
+        url: str,
+        params: str | bytes | dict[str, Any] | None = None,
+    ) -> JSON:
+        self.__wait_for_request()
+        res_json = get_json_request(url=url, params=params, headers=self.__auth_headers)
+        return res_json
+
+    def __post_json_request_wait(self, url: str, json: JSON):
+        self.__wait_for_request()
+        res_json = post_json_request(url=url, json=json, headers=self.__auth_headers)
+        return res_json
+
     def __get_supported_chains(self) -> dict[EVMChainID, EVMChain]:
         supported_chains = {}
 
         try:
             url = f"{self.__base_url_api}/all/blockchains"
-            res_blockchains = get_json_request(url=url, headers=self.__auth_headers)
+            res_blockchains = self.__get_json_request_wait(url=url)
             res_blockchains = cast(ResponseBlockchains, res_blockchains)
 
             for blockchain in res_blockchains["items"]:
@@ -159,7 +189,7 @@ class RoutescanAPI(BalanceOracleApiInterface):
                 supported_chains[chain_id] = chain
 
         except RequestException as e:
-            raise BalanceOracleException(e)
+            raise BalanceOracleException(e) from e
 
         return dict(sorted(supported_chains.items()))
 
@@ -188,8 +218,9 @@ class RoutescanAPI(BalanceOracleApiInterface):
                 "timestamp": timestamp_unix_seconds,
             }
 
-            res_block_no = get_json_request(
-                url=url, params=dict(params), headers=self.__auth_headers
+            res_block_no = self.__get_json_request_wait(
+                url=url,
+                params=dict(params),
             )
             res_block_no = cast(ResponseRoutescanEtherscanApi, res_block_no)
             self.__handle_etherscan_response(res_block_no)
@@ -202,10 +233,8 @@ class RoutescanAPI(BalanceOracleApiInterface):
 
             return int(block_number)
 
-        except TooManyRequestsException as e:
-            raise ApiRateLimitException(e)
         except RequestException as e:
-            raise BalanceOracleException(e)
+            raise BalanceOracleException(e) from e
 
     def __get_block_timestamp(
         self, block_number: BlockNumber, chain_id: EVMChainID, rpc_url: str
@@ -218,16 +247,14 @@ class RoutescanAPI(BalanceOracleApiInterface):
                 "params": [hex(block_number), True],
             }
 
-            res_block_timestamp = post_json_request(
-                url=rpc_url, json=payload, headers=self.__auth_headers
-            )
+            res_block_timestamp = self.__post_json_request_wait(url=rpc_url, json=payload)
             res_block_timestamp = cast(ResponseRPCGetBlockByNumber, res_block_timestamp)
 
             block_timestamp_hex = res_block_timestamp["result"]["timestamp"]
             return int(block_timestamp_hex, 0)
 
         except RequestException as e:
-            raise EthRPCException(e)
+            raise EthRPCException(e) from e
 
     def __get_balance_at_block(
         self,
@@ -244,9 +271,7 @@ class RoutescanAPI(BalanceOracleApiInterface):
                 "blockno": block_number,
             }
 
-            res_balance = get_json_request(
-                url=url, params=dict(params), headers=self.__auth_headers
-            )
+            res_balance = self.__get_json_request_wait(url=url, params=dict(params))
             res_balance = cast(ResponseRoutescanEtherscanApi, res_balance)
             self.__handle_etherscan_response(res_balance)
 
@@ -257,7 +282,7 @@ class RoutescanAPI(BalanceOracleApiInterface):
             return int(balance)
 
         except RequestException as e:
-            raise BalanceOracleException(e)
+            raise BalanceOracleException(e) from e
 
     def __get_base_asset_balance_at_block(
         self,
@@ -302,7 +327,7 @@ class RoutescanAPI(BalanceOracleApiInterface):
                     f"Failed to get block timestamp from RPC '{rpc_url} for block number {block_number}: {e}"
                 )
         else:
-            self.__log__.warn(
+            self.__log__.warning(
                 f"no rpc url found for chain '{chain_name}' with ID {chain_id}. skipping block timestamp lookup."
             )
 
@@ -345,7 +370,7 @@ class RoutescanAPI(BalanceOracleApiInterface):
                         chain_id=chain_id, timestamp_unix_seconds=timestamp_unix_seconds
                     )
                 except NoClosestBlockException:
-                    self.__log__.warn(
+                    self.__log__.warning(
                         f"no block found close to {timestamp_unix_seconds} on chain '{chain_name}' with ID {chain_id}. Did chain exist then?"
                     )
                     continue
@@ -380,7 +405,7 @@ class RoutescanAPI(BalanceOracleApiInterface):
                 #     )
                 #     continue
             except ApiUnavailableException:
-                self.__log__.warn(
+                self.__log__.warning(
                     f"Historical Balance API temporarily unavailable for chain '{chain_name}' with ID {chain_id}. skipping."
                 )
                 continue
