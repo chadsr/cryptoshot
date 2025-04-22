@@ -136,11 +136,10 @@ class Cryptoshot:
     def balances(self) -> Balances:
         balances: Balances = {}
 
-        for account in self.__config["accounts"]:
-            address_type = account["type"]
-
-            for service_name, service in self.__services.items():
-                if isinstance(service, BalanceOracleInterface):
+        for service_name, service in self.__services.items():
+            if isinstance(service, BalanceOracleInterface):
+                for account in self.__config["accounts"]:
+                    address_type = account["type"]
                     if address_type not in service.supported_address_types():
                         continue
 
@@ -164,14 +163,14 @@ class Cryptoshot:
                         )
                         continue
 
-                elif isinstance(service, BalanceProviderInterface):
-                    balances_at_time = service.all_balances_at(
-                        timestamp_unix_seconds=self.__timestamp_unix_seconds
-                    )
+            elif isinstance(service, BalanceProviderInterface):
+                balances_at_time = service.all_balances_at(
+                    timestamp_unix_seconds=self.__timestamp_unix_seconds
+                )
 
-                    balances = self.__add_balances_at_time(service_name, balances_at_time, balances)
-                else:
-                    continue
+                balances = self.__add_balances_at_time(service_name, balances_at_time, balances)
+            else:
+                continue
 
         return balances
 
