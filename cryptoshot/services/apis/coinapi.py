@@ -19,7 +19,7 @@ from ...services.types import (
 
 from .interfaces import PriceOracleApiInterface
 from .exceptions import ApiRateLimitException, RequestException, TooManyRequestsException
-from .requests import HEADERS_JSON, get_json_request
+from .requestutils import HEADERS_JSON, get_json_request
 
 COINAPI_BASE_URL = "https://rest.coinapi.io/v1"
 
@@ -81,9 +81,9 @@ class CoinAPI(PriceOracleApiInterface):
 
             return assets
         except TooManyRequestsException as e:
-            raise ApiRateLimitException(e)
+            raise ApiRateLimitException(e) from e
         except RequestException as e:
-            raise PriceOracleException(e)
+            raise PriceOracleException(e) from e
 
     def value_at(self, asset_id, quote_asset_id, timestamp_unix_seconds) -> AssetValueAtTime:
         if asset_id not in self.__assets__:
@@ -117,6 +117,6 @@ class CoinAPI(PriceOracleApiInterface):
                 msg = ""
                 if e.error_messages:
                     msg = e.error_messages[0]
-                raise NoValueFoundException(msg)
+                raise NoValueFoundException(msg) from e
 
-            raise PriceOracleException(e)
+            raise PriceOracleException(e) from e

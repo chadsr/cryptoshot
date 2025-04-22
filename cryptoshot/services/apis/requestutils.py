@@ -17,6 +17,8 @@ HEADERS_URL_ENCODED = {
 
 RESPONSE_ERROR_KEYS = ["error", "errors"]
 
+DEFAULT_TIMEOUT = 10
+
 
 def validate_response(response: requests.Response):
     error_msgs: list[JSON] = []
@@ -51,13 +53,14 @@ def get_json_request(
     url: str,
     params: str | bytes | dict[str, Any] | None = None,
     headers: HttpHeaders = HEADERS_JSON,
+    timeout: int = DEFAULT_TIMEOUT,
 ) -> JSON:
     try:
-        res = requests.get(url, params=params, headers=headers)
+        res = requests.get(url, params=params, headers=headers, timeout=timeout)
         validate_response(res)
         return res.json()
     except requests.RequestException as e:
-        raise RequestException("get request failed", exception=e)
+        raise RequestException("get request failed", exception=e) from e
 
 
 def post_json_request(
@@ -65,10 +68,11 @@ def post_json_request(
     json: JSON | None = None,
     data: bytes | None = None,
     headers: HttpHeaders = HEADERS_JSON,
+    timeout: int = DEFAULT_TIMEOUT,
 ) -> JSON:
     try:
-        res = requests.post(url, json=json, data=data, headers=headers)
+        res = requests.post(url, json=json, data=data, headers=headers, timeout=timeout)
         validate_response(res)
         return res.json()
     except requests.RequestException as e:
-        raise RequestException("post request failed", exception=e)
+        raise RequestException("post request failed", exception=e) from e

@@ -30,3 +30,19 @@ class BalanceProviderApiInterface(ApiInterface, BalanceProviderInterface):
 class BalanceOracleApiInterface(ApiInterface, BalanceOracleInterface):
     def __init__(self, config: ApiConfig, log: Logger) -> None:
         super().__init__(config=config, log=log)
+
+
+class EvmBalanceOracleApiInterface(BalanceOracleApiInterface):
+    __include_chain_ids__: set[int] | None
+    __exclude_chain_ids__: set[int] | None
+
+    def __init__(
+        self,
+        config: ApiConfig,
+        log: Logger,
+        include_chain_ids: set[int] | None = None,
+        exclude_chain_ids: set[int] | None = None,
+    ) -> None:
+        super().__init__(config=config, log=log)
+        self.__include_chain_ids__ = include_chain_ids
+        self.__exclude_chain_ids__ = exclude_chain_ids

@@ -6,6 +6,7 @@ from .services.types import (
     AssetBalanceAtTime,
     AssetID,
     AssetValueAtTime,
+    EVMChainID,
     ServiceAssetID,
     ServiceConfig,
     ServiceName,
@@ -34,6 +35,15 @@ class AssetsConfig(TypedDict):
     group: dict[AssetID, AssetConfigGrouping]
 
 
+class EvmChainIds(TypedDict):
+    include: list[EVMChainID]
+    exclude: list[EVMChainID]
+
+
+class ChainsConfig(TypedDict):
+    evmChainIds: EvmChainIds
+
+
 ServicesConfig: TypeAlias = list[ServiceConfig]
 AccountsConfig: TypeAlias = list[AccountConfig]
 
@@ -42,6 +52,7 @@ class Config(TypedDict):
     services: ServicesConfig
     accounts: AccountsConfig
     assets: AssetsConfig
+    chains: ChainsConfig
     price_oracle: PriceOracleConfig
     formatting: FormattingConfig
 

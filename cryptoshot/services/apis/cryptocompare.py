@@ -19,7 +19,7 @@
 # )
 
 # from .interfaces import PriceOracleInterface
-# from .requests import JSON_HEADERS, get_json_request
+# from .requestutils import JSON_HEADERS, get_json_request
 
 # CRYPTOCOMPARE_BASE_URL = "https://min-api.cryptocompare.com/data/v4"
 
