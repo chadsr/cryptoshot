@@ -159,7 +159,12 @@ def init_argparse() -> argparse.ArgumentParser:
 def main() -> None:
     arg_parser = init_argparse()
     args = arg_parser.parse_args()
-    args.func(args)
+
+    try:
+        args.func(args)
+    except AttributeError:
+        arg_parser.print_help()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

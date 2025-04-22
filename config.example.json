@@ -2,7 +2,8 @@
     "services": [
         {"name": "kraken1", "type": "kraken", "api_token": "apitoken", "private_key": "privatekey"},
         {"name": "coinapi1", "type": "coinapi", "api_token": "apitokenn"},
-        {"name": "coingecko1", "type": "coingecko", "api_token": "apitoken"}
+        {"name": "coingecko1", "type": "coingecko", "api_token": "apitoken"},
+        {"name": "routescan1", "type": "routescan", "api_token": "N/A"}
     ],
     "accounts": [
         {
@@ -16,12 +17,7 @@
         "exclude": [],
         "group": {"BTC": ["XBT"]}
     },
-    "chains": {
-        "evmChainIds": {
-            "include": [1],
-            "exclude": []
-        }
-    },
+    "chains": {"evmChainIds": {"include": [1], "exclude": []}},
     "price_oracle": {"quote_asset": "EUR", "priority": ["kraken1", "coinapi1", "coingecko1"]},
     "formatting": {"timestamp": "%d-%m-%YT%H:%M:%S"}
 }
