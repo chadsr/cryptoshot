@@ -3,6 +3,7 @@ from zoneinfo import ZoneInfo
 from datetime import datetime
 
 from cryptoshot.services.apis.exceptions import ApiRateLimitException
+from cryptoshot.services.apis.interfaces import EvmBalanceOracleApiInterface
 
 from .services import SERVICES
 from .services.types import (
@@ -49,6 +50,9 @@ class Cryptoshot:
         self.__asset_ids_include = set(self.__config["assets"]["include"])
         self.__asset_ids_exclude = set(self.__config["assets"]["exclude"])
 
+        self.__evm_chain_ids_include = set(self.__config["chains"]["evmChainIds"]["include"])
+        self.__evm_chain_ids_exclude = set(self.__config["chains"]["evmChainIds"]["exclude"])
+
         self.__services: dict[ServiceName, ServiceInterface] = {}
         self.__init_services()
 
@@ -81,7 +85,21 @@ class Cryptoshot:
             service_class = SERVICES[service_type]
 
             try:
-                service = service_class(config=service_config, log=self.__log__)
+                if issubclass(service_class, EvmBalanceOracleApiInterface):
+                    if "api_token" not in service_config:
+                        raise InvalidServiceConfigException(
+                            f"field 'api_token' missing from {service_name}"
+                        )
+
+                    service = service_class(
+                        config=service_config,
+                        log=self.__log__,
+                        include_chain_ids=self.__evm_chain_ids_include,
+                        exclude_chain_ids=self.__evm_chain_ids_exclude,
+                    )
+                else:
+                    service = service_class(config=service_config, log=self.__log__)
+
                 self.__services[service_name] = service
             except ApiRateLimitException:
                 self.__log__.warning(f"service '{service_name}' is rate-limited. skipping.")
@@ -118,11 +136,11 @@ class Cryptoshot:
     def balances(self) -> Balances:
         balances: Balances = {}
 
-        for service_name, service in self.__services.items():
-            if isinstance(service, BalanceOracleInterface):
-                for account in self.__config["accounts"]:
-                    address_type = account["type"]
+        for account in self.__config["accounts"]:
+            address_type = account["type"]
 
+            for service_name, service in self.__services.items():
+                if isinstance(service, BalanceOracleInterface):
                     if address_type not in service.supported_address_types():
                         continue
 
@@ -146,14 +164,14 @@ class Cryptoshot:
                         )
                         continue
 
-            elif isinstance(service, BalanceProviderInterface):
-                balances_at_time = service.all_balances_at(
-                    timestamp_unix_seconds=self.__timestamp_unix_seconds
-                )
+                elif isinstance(service, BalanceProviderInterface):
+                    balances_at_time = service.all_balances_at(
+                        timestamp_unix_seconds=self.__timestamp_unix_seconds
+                    )
 
-                balances = self.__add_balances_at_time(service_name, balances_at_time, balances)
-            else:
-                continue
+                    balances = self.__add_balances_at_time(service_name, balances_at_time, balances)
+                else:
+                    continue
 
         return balances
 

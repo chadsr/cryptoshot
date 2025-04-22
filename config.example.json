@@ -16,6 +16,12 @@
         "exclude": [],
         "group": {"BTC": ["XBT"]}
     },
+    "chains": {
+        "evmChainIds": {
+            "include": [1],
+            "exclude": []
+        }
+    },
     "price_oracle": {"quote_asset": "EUR", "priority": ["kraken1", "coinapi1", "coingecko1"]},
     "formatting": {"timestamp": "%d-%m-%YT%H:%M:%S"}
 }

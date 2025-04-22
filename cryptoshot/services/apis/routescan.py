@@ -28,13 +28,13 @@ from ...services.types import (
     HttpHeaders,
 )
 
-from .interfaces import BalanceOracleApiInterface
+from .interfaces import EvmBalanceOracleApiInterface
 from .exceptions import (
     ApiException,
     ApiUnavailableException,
     RequestException,
 )
-from .requests import HEADERS_JSON, get_json_request, post_json_request
+from .requestutils import HEADERS_JSON, get_json_request, post_json_request
 
 ROUTESCAN_API_BASE_URL = "https://api.routescan.io/v2"
 # ROUTESCAN_CDN_BASE_URL = "https://cdn.routescan.io"
@@ -113,9 +113,21 @@ class ParamsRoutescanEtherscanApi(TypedDict):
 REQUESTS_PER_SECOND = 1
 
 
-class RoutescanAPI(BalanceOracleApiInterface):
-    def __init__(self, config: ApiConfig, log: Logger) -> None:
-        super().__init__(config=config, log=log)
+class RoutescanAPI(EvmBalanceOracleApiInterface):
+    def __init__(
+        self,
+        config: ApiConfig,
+        log: Logger,
+        include_chain_ids: set[int] | None = None,
+        exclude_chain_ids: set[int] | None = None,
+    ) -> None:
+        super().__init__(
+            config=config,
+            log=log,
+            include_chain_ids=include_chain_ids,
+            exclude_chain_ids=exclude_chain_ids,
+        )
+
         self.__base_url_api: str = (
             f"{ROUTESCAN_API_BASE_URL}/network/{RoutescanNetworkType.MAINNET}/evm"
         )
@@ -130,6 +142,17 @@ class RoutescanAPI(BalanceOracleApiInterface):
         self.__supported_address_types.update([AddressType.EVM])
 
         self.__supported_chains: dict[EVMChainID, EVMChain] = self.__get_supported_chains()
+
+        self.__selected_chain_ids: set[EVMChainID] = set()
+
+        for chain_id in self.__supported_chains.keys():
+            if self.__exclude_chain_ids__ and chain_id in self.__exclude_chain_ids__:
+                continue
+
+            if self.__include_chain_ids__ is None or (
+                self.__include_chain_ids__ and chain_id in self.__include_chain_ids__
+            ):
+                self.__selected_chain_ids.add(chain_id)
 
     def supported_address_types(self) -> set[AddressType]:
         return self.__supported_address_types
@@ -362,6 +385,10 @@ class RoutescanAPI(BalanceOracleApiInterface):
 
         for chain in self.__supported_chains.values():
             chain_id = chain["id"]
+
+            if chain_id not in self.__selected_chain_ids:
+                continue
+
             chain_name = chain["name"]
 
             try:
