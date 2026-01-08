@@ -1,6 +1,7 @@
 # CryptoShot
 
 [![CI](https://github.com/chadsr/cryptoshot/actions/workflows/ci.yml/badge.svg)](https://github.com/chadsr/cryptoshot/actions/workflows/ci.yml)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/chadsr/cryptoshot/main.svg)](https://results.pre-commit.ci/latest/github/chadsr/cryptoshot/main)
 
 Retrieve cryptocurrency balances and values at a specific point in time
 
