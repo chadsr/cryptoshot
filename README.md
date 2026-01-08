@@ -8,7 +8,7 @@ Retrieve cryptocurrency balances and values at a specific point in time
 ## Setup
 
 ```shell
-poetry install
+uv sync --all-groups
 ```
 
 ## Configuration
@@ -22,5 +22,5 @@ Once copied, fill out any relevant addresses, API keys and other options.
 ## Usage
 
 ```shell
-poetry run cryptoshot get -b -p --json -d "01-01-2024T00:00:00" -t "Europe/Amsterdam"
+uv run cryptoshot get -b -p --json -d "01-01-2024T00:00:00" -t "Europe/Amsterdam"
 ```
