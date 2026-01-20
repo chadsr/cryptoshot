@@ -17,7 +17,7 @@ HEADERS_URL_ENCODED = {
 
 RESPONSE_ERROR_KEYS = ["error", "errors"]
 
-DEFAULT_TIMEOUT = 10
+DEFAULT_TIMEOUT: tuple[float, float] = (5.0, 10.0)
 
 
 def validate_response(response: requests.Response):
@@ -30,7 +30,7 @@ def validate_response(response: requests.Response):
                 error_obj = response_json[error_key]
                 if isinstance(error_obj, list) and len(error_obj) > 0:
                     error_msgs.extend([str(error_msg) for error_msg in error_obj])
-                if isinstance(error_obj, dict) and len(error_obj) > 0:
+                elif isinstance(error_obj, dict) and len(error_obj) > 0:
                     error_msgs.append(error_obj)
                 elif isinstance(error_obj, str) and len(error_obj) > 0:
                     error_msgs.append(error_obj)
@@ -61,7 +61,7 @@ def get_json_request(
     url: str,
     params: str | bytes | Mapping[str, object] | None = None,
     headers: HttpHeaders = HEADERS_JSON,
-    timeout: int = DEFAULT_TIMEOUT,
+    timeout: float | tuple[float, float] = DEFAULT_TIMEOUT,
 ) -> JSON:
     try:
         req_params: str | bytes | Mapping[str, str] | None
@@ -83,7 +83,7 @@ def post_json_request(
     json: JSON | None = None,
     data: bytes | None = None,
     headers: HttpHeaders = HEADERS_JSON,
-    timeout: int = DEFAULT_TIMEOUT,
+    timeout: float | tuple[float, float] = DEFAULT_TIMEOUT,
 ) -> JSON:
     try:
         res = requests.post(url, json=json, data=data, headers=headers, timeout=timeout)
