@@ -107,10 +107,7 @@ class ParamsRoutescanEtherscanApi(TypedDict):
     apikey: NotRequired[str]
 
 
-# https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/api?module=account&action=tokentx&contractaddress=0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7&address=0x77134cbC06cB00b66F4c7e623D5fdBF6777635EC&page=1&offset=100&startblock=34372864&endblock=34472864&sort=asc&apikey=YourApiKeyToken
-# https://api.routescan.io/v2/network/mainnet/evm/1/etherscan/api?module=account&action=tokenbalancehistory&contractaddress=0x57d90b64a1a57749b0f932f1a3395792e12e7055&address=0xe04f27eb70e025b78871a2ad7eabe85e61212761&blockno=8000000&apikey=YourApiKeyToken
-
-REQUESTS_PER_SECOND = 1
+REQUESTS_PER_SECOND = 2
 
 
 class RoutescanAPI(EvmBalanceOracleApiInterface):
@@ -131,7 +128,8 @@ class RoutescanAPI(EvmBalanceOracleApiInterface):
         self.__base_url_api: str = (
             f"{ROUTESCAN_API_BASE_URL}/network/{RoutescanNetworkType.MAINNET}/evm"
         )
-        # self.__base_url_cdn: str = f"{ROUTESCAN_CDN_BASE_URL}/api/evm"
+
+        self.__api_key: str | None = config["api_token"] if config["api_token"] != "" else None
 
         self.__auth_headers: HttpHeaders = {}
         self.__auth_headers.update(HEADERS_JSON)
@@ -241,6 +239,9 @@ class RoutescanAPI(EvmBalanceOracleApiInterface):
                 "timestamp": timestamp_unix_seconds,
             }
 
+            if self.__api_key:
+                params["apikey"] = self.__api_key
+
             res_block_no = self.__get_json_request_wait(
                 url=url,
                 params=dict(params),
@@ -293,6 +294,9 @@ class RoutescanAPI(EvmBalanceOracleApiInterface):
                 "address": address,
                 "blockno": block_number,
             }
+
+            if self.__api_key:
+                params["apikey"] = self.__api_key
 
             res_balance = self.__get_json_request_wait(url=url, params=dict(params))
             res_balance = cast(ResponseRoutescanEtherscanApi, res_balance)
