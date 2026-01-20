@@ -134,29 +134,29 @@ def test_all_balances_at_returns_separate_p_and_x_chain_totals(
 
     balances_at_time = api.all_balances_at(account=account, timestamp_unix_seconds=ts)
 
-    # Expect two separate entries for P-Chain and X-Chain using symbol+suffix as keys
-    sym_p = f"{symbol} (P-Chain)"
-    sym_x = f"{symbol} (X-Chain)"
-    assert sym_p in balances_at_time
-    assert sym_x in balances_at_time
+    # Expect a single symbol key with separate entries for P-Chain and X-Chain via account keys
+    assert symbol in balances_at_time
 
-    assert account["address"] in balances_at_time[sym_p]
-    assert account["address"] in balances_at_time[sym_x]
+    account_key_p = f"{account['address']} (P-Chain)"
+    account_key_x = f"{account['address']} (X-Chain)"
 
-    bal_p = balances_at_time[sym_p][account["address"]]
-    bal_x = balances_at_time[sym_x][account["address"]]
+    assert account_key_p in balances_at_time[symbol]
+    assert account_key_x in balances_at_time[symbol]
+
+    bal_p = balances_at_time[symbol][account_key_p]
+    bal_x = balances_at_time[symbol][account_key_x]
 
     expected_quantity_p = total_p_smallest / (10**denom)
     expected_quantity_x = total_x_smallest / (10**denom)
 
-    assert bal_p["asset"]["id"] == sym_p
+    assert bal_p["asset"]["id"] == symbol
     assert bal_p["asset"]["name"] == f"{name} (P-Chain)"
     assert bal_p["asset"]["decimals"] == denom
     assert bal_p["asset"]["service_asset_id"] == asset_id
     assert bal_p["timestamp"] == ts
     assert bal_p["quantity"] == expected_quantity_p
 
-    assert bal_x["asset"]["id"] == sym_x
+    assert bal_x["asset"]["id"] == symbol
     assert bal_x["asset"]["name"] == f"{name} (X-Chain)"
     assert bal_x["asset"]["decimals"] == denom
     assert bal_x["asset"]["service_asset_id"] == asset_id

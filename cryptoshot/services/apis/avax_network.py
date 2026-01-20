@@ -213,19 +213,23 @@ class AvaxNetworkAPI(BalanceOracleApiInterface):
                     else float(total_amount_smallest)
                 )
 
+                # Use the symbol as the asset id and keep the chain label elsewhere so X/P remain separate.
+                asset_id_symbol = entry_sample["symbol"]
                 asset_name_with_chain = f"{entry_sample['name']} ({chain_label})"
 
                 asset: Asset = {
-                    "id": entry_sample["symbol"],
+                    "id": asset_id_symbol,
                     "name": asset_name_with_chain,
                     "decimals": denomination,
                     "service_asset_id": entry_sample["assetId"],
                 }
 
-                if asset["id"] not in balances_at_time:
-                    balances_at_time[asset["id"]] = {}
+                if asset_id_symbol not in balances_at_time:
+                    balances_at_time[asset_id_symbol] = {}
 
-                balances_at_time[asset["id"]][address] = {
+                # Disambiguate P/X by encoding the chain in the account key
+                account_key = f"{address} ({chain_label})"
+                balances_at_time[asset_id_symbol][account_key] = {
                     "asset": asset,
                     "quantity": quantity,
                     "timestamp": timestamp_unix_seconds,
