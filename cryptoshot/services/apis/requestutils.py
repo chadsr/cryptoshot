@@ -59,12 +59,19 @@ def validate_response(response: requests.Response):
 
 def get_json_request(
     url: str,
-    params: str | bytes | Mapping[str, str] | None = None,
+    params: str | bytes | Mapping[str, object] | None = None,
     headers: HttpHeaders = HEADERS_JSON,
     timeout: int = DEFAULT_TIMEOUT,
 ) -> JSON:
     try:
-        res = requests.get(url, params=params, headers=headers, timeout=timeout)
+        req_params: str | bytes | Mapping[str, str] | None
+        if isinstance(params, Mapping):
+            # Convert numeric/bool params to strings for requests
+            req_params = {k: str(v) for k, v in params.items()}
+        else:
+            req_params = params
+
+        res = requests.get(url, params=req_params, headers=headers, timeout=timeout)
         validate_response(res)
         return res.json()
     except requests.RequestException as e:
