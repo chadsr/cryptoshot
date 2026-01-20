@@ -1,4 +1,5 @@
 import time
+from collections.abc import Mapping
 from enum import StrEnum
 from types import MappingProxyType
 from typing import NamedTuple, NotRequired, TypedDict, TypeAlias, cast
@@ -129,7 +130,6 @@ class ResponseAssetPair(TypedDict):
     aclass_base: str
     aclass_quote: str
     altname: str
-    base: AssetID | AssetID
     base: str
     quote: str
     wsname: str
@@ -152,7 +152,7 @@ class Trade(NamedTuple):
 
 class ResponseTrades(TypedDict):
     # https://docs.kraken.com/rest/#tag/Spot-Market-Data/operation/getRecentTrades
-    result: dict[str, list[list]]
+    result: dict[str, list[list[float | int | str]]]
 
 
 KrakenLedgerAssetsAll: KrakenAssetID = "all"
@@ -168,8 +168,7 @@ class RequestGetLedgersInfo(TypedDict):
     without_count: NotRequired[bool]
 
 
-class RequestWithNonce(TypedDict):
-    nonce: str
+RequestWithNonce: TypeAlias = dict[str, str]
 
 
 KrakenLedgerEntryID: TypeAlias = str
@@ -258,9 +257,10 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
         return h
 
     @staticmethod
-    def __set_nonce(payload: dict) -> RequestWithNonce:
+    def __set_nonce(payload: Mapping[str, str | int | bool]) -> RequestWithNonce:
         req: RequestWithNonce = {"nonce": str(int(1000 * time.time()))}
-        req.update(payload)
+        for k, v in payload.items():
+            req[str(k)] = str(v)
         return req
 
     def __get_kraken_assets(self) -> ResponseAssets:
@@ -463,7 +463,7 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
         if isinstance(assets, list):
             assets = ",".join(assets)
 
-        payload: RequestGetLedgersInfo = {
+        payload: dict[str, str | int | bool] = {
             "asset": str(assets),
             "aclass": str(KrakenAssetClass.CURRENCY),
             "type": str(KrakenLedgerEntryType.ALL),
@@ -477,7 +477,7 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
 
         # TODO: Refactor into post_private
 
-        payload_nonce = self.__set_nonce(dict(payload))
+        payload_nonce = self.__set_nonce(payload)
         headers = dict(self.__auth_headers_url_encoded)
 
         signed_headers = self.__set_signature_header(

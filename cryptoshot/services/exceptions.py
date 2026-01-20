@@ -36,6 +36,7 @@ class EthRPCException(BalanceServiceException):
 
 class UnsupportedAddressTypeException(BalanceOracleException):
     def __init__(self, address_type: AddressType) -> None:
+        super().__init__("Unsupported address type")
         self.address_type = address_type
 
 
@@ -45,6 +46,7 @@ class NoBalancesFoundException(BalanceOracleException):
 
 class NoClosestBlockException(BalanceOracleException):
     def __init__(self, timestamp_unix_seconds: int | None = None) -> None:
+        super().__init__("No closest block found")
         self.timestamp_unix_seconds = timestamp_unix_seconds
 
 
@@ -62,11 +64,13 @@ class NoSupportedAssetsPairsException(PriceOracleException):
 
 class UnsupportedAssetIDException(ServiceException):
     def __init__(self, asset_id: AssetID) -> None:
+        super().__init__("Unsupported asset id")
         self.asset_id = asset_id
 
 
 class UnsupportedQuoteAssetIDException(PriceOracleException):
     def __init__(self, quote_asset_id: AssetID) -> None:
+        super().__init__("Unsupported quote asset id")
         self.quote_asset_id = quote_asset_id
 
 

@@ -1,4 +1,4 @@
-from typing import Any
+from collections.abc import Mapping
 import requests
 
 from ...services.types import JSON, HttpHeaders
@@ -36,22 +36,30 @@ def validate_response(response: requests.Response):
                     error_msgs.append(error_obj)
 
     if len(error_msgs) > 0 or response.status_code != 200:
-        exception_args = {
-            "status_code": response.status_code,
-            "result": response_json,
-            "error_messages": error_msgs,
-        }
+        status_code = response.status_code
+        result = response_json
+        error_messages = error_msgs
 
-        match response.status_code:
+        match status_code:
             case 429:
-                raise TooManyRequestsException("Too many requests", **exception_args)
+                raise TooManyRequestsException(
+                    "Too many requests",
+                    status_code=status_code,
+                    result=result,
+                    error_messages=error_messages,
+                )
             case _:
-                raise RequestException("Request failed", **exception_args)
+                raise RequestException(
+                    "Request failed",
+                    status_code=status_code,
+                    result=result,
+                    error_messages=error_messages,
+                )
 
 
 def get_json_request(
     url: str,
-    params: str | bytes | dict[str, Any] | None = None,
+    params: str | bytes | Mapping[str, str] | None = None,
     headers: HttpHeaders = HEADERS_JSON,
     timeout: int = DEFAULT_TIMEOUT,
 ) -> JSON:

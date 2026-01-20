@@ -6,6 +6,6 @@ logging.basicConfig(level="NOTSET", format=FORMAT, datefmt="[%X]", handlers=[Ric
 LOGGER = logging.getLogger("rich")
 
 
-class LoggerAdapter(logging.LoggerAdapter):
+class LoggerAdapter(logging.LoggerAdapter[logging.Logger]):
     def __init__(self, logger: logging.Logger):
         super().__init__(logger, extra={})

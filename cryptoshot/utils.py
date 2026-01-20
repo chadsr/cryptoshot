@@ -3,9 +3,11 @@ from calendar import timegm
 from zoneinfo import ZoneInfo, available_timezones
 import csv
 import json
+from typing import overload
 
-from .types import Prices
+from .types import Prices, Balances
 from .exceptions import InvalidTimeZoneException
+from .services.types import JSON
 
 
 def timezones() -> list[str]:
@@ -38,6 +40,18 @@ def prices_to_csv(prices: Prices, file_path: str):
         w.writerow(csv_dict_sorted)
 
 
-def dict_to_json(dict_obj: dict, file_path: str):
+@overload
+def dict_to_json(dict_obj: Prices, file_path: str) -> None: ...
+
+
+@overload
+def dict_to_json(dict_obj: Balances, file_path: str) -> None: ...
+
+
+@overload
+def dict_to_json(dict_obj: JSON, file_path: str) -> None: ...
+
+
+def dict_to_json(dict_obj, file_path: str) -> None:
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(dict_obj, f, ensure_ascii=False, sort_keys=True, indent=4)

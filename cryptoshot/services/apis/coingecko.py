@@ -202,7 +202,7 @@ class CoinGeckoAPI(PriceOracleApiInterface):
         try:
             url = f"{self.__base_url_api}/coins/{cg_coin_id}/market_chart/range"
             res_chart_range = get_json_request(
-                url=url, params=cast(dict, params_chart_range), headers=self.__auth_headers
+                url=url, params=params_chart_range, headers=self.__auth_headers
             )
             res_chart_range = cast(ResponseCoinHistoricalChartRange, res_chart_range)
 
@@ -241,10 +241,11 @@ class CoinGeckoAPI(PriceOracleApiInterface):
                         case CoinGeckoErrors.COIN_NOT_FOUND:
                             raise UnsupportedAssetIDException(asset_id)
                 if isinstance(error_obj, dict):
-                    res_error: ResponseError = cast(ResponseError, error_obj)
-                    if "error_code" in res_error["status"]:
-                        match res_error["status"]["error_code"]:
-                            case CoinGeckoErrorCode.EXCEEDS_TIME_RANGE:
+                    status_obj = error_obj.get("status")
+                    if isinstance(status_obj, dict):
+                        error_code = status_obj.get("error_code")
+                        if isinstance(error_code, int):
+                            if error_code == CoinGeckoErrorCode.EXCEEDS_TIME_RANGE:
                                 raise NoValueFoundException("Available time range exceeded")
 
             raise PriceOracleException(e)

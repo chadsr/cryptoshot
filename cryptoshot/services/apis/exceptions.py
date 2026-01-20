@@ -8,6 +8,7 @@ class ApiException(ServiceException):
 
 class ApiUnavailableException(ApiException):
     def __init__(self, reason: str | None):
+        super().__init__("API temporarily unavailable")
         self.reason = reason
 
 
