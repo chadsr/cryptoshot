@@ -7,6 +7,7 @@ from .apis.coinapi import CoinAPI
 from .apis.coingecko import CoinGeckoAPI
 from .apis.kraken import KrakenAPI
 from .apis.routescan import RoutescanAPI
+from .apis.avax_network import AvaxNetworkAPI
 
 SERVICES: MappingProxyType[ServiceType, type[ServiceInterface]] = MappingProxyType(
     {
@@ -15,5 +16,6 @@ SERVICES: MappingProxyType[ServiceType, type[ServiceInterface]] = MappingProxyTy
         ServiceType.COINGECKO: CoinGeckoAPI,
         ServiceType.KRAKEN: KrakenAPI,
         ServiceType.ROUTESCAN: RoutescanAPI,
+        ServiceType.AVAX_NETWORK: AvaxNetworkAPI,
     }
 )

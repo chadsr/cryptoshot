@@ -1,8 +1,10 @@
+from collections.abc import Mapping, Sequence
 from enum import StrEnum
-from typing import TypeAlias, TypedDict, NotRequired, Mapping
+from typing import TypeAlias, TypedDict, NotRequired
 
 HttpHeaders: TypeAlias = Mapping[str, str | bytes | None]
-JSON: TypeAlias = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
+JSON: TypeAlias = Mapping[str, "JSON"] | Sequence["JSON"] | str | int | float | bool | None
+JSONDict: TypeAlias = Mapping[str, JSON]
 
 AssetID: TypeAlias = str
 ServiceName: TypeAlias = str
@@ -29,6 +31,7 @@ class ServiceType(StrEnum):
     COINGECKO = "coingecko"
     KRAKEN = "kraken"
     ROUTESCAN = "routescan"
+    AVAX_NETWORK = "avax_network"
 
 
 class AssetType(StrEnum):
