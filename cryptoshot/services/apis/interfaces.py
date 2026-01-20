@@ -1,4 +1,6 @@
 from logging import Logger
+from abc import ABC
+
 
 from ..types import ApiConfig
 from ..exceptions import InvalidApiConfigException
@@ -17,22 +19,19 @@ class ApiInterface(ServiceInterface):
             raise InvalidApiConfigException("Expected 'api_token'")
 
 
-class PriceOracleApiInterface(ApiInterface, PriceOracleInterface):
-    def __init__(self, config: ApiConfig, log: Logger) -> None:
-        super().__init__(config=config, log=log)
+class PriceOracleApiInterface(ApiInterface, PriceOracleInterface, ABC):
+    pass
 
 
-class BalanceProviderApiInterface(ApiInterface, BalanceProviderInterface):
-    def __init__(self, config: ApiConfig, log: Logger) -> None:
-        super().__init__(config=config, log=log)
+class BalanceProviderApiInterface(ApiInterface, BalanceProviderInterface, ABC):
+    pass
 
 
-class BalanceOracleApiInterface(ApiInterface, BalanceOracleInterface):
-    def __init__(self, config: ApiConfig, log: Logger) -> None:
-        super().__init__(config=config, log=log)
+class BalanceOracleApiInterface(ApiInterface, BalanceOracleInterface, ABC):
+    pass
 
 
-class EvmBalanceOracleApiInterface(BalanceOracleApiInterface):
+class EvmBalanceOracleApiInterface(BalanceOracleApiInterface, ABC):
     __include_chain_ids__: set[int] | None
     __exclude_chain_ids__: set[int] | None
 

@@ -1,6 +1,6 @@
-from typing import Protocol
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from logging import Logger
+from typing import Literal
 
 from .types import (
     AccountAddress,
@@ -16,10 +16,10 @@ from .types import (
 )
 from .exceptions import InvalidServiceConfigException
 
-REQUIRED_CONFIG_FIELDS = ["type", "name"]
+REQUIRED_CONFIG_FIELDS: tuple[Literal["type", "name"], ...] = ("type", "name")
 
 
-class ServiceInterface(Protocol):
+class ServiceInterface(ABC):
     __name__: ServiceName
     __type__: ServiceType
     __assets__: Assets
@@ -36,16 +36,11 @@ class ServiceInterface(Protocol):
 
     @staticmethod
     def __validate_config(config: ServiceConfig) -> None:
-        for config_field_name in REQUIRED_CONFIG_FIELDS:
-            if not config[config_field_name]:
+        for key in REQUIRED_CONFIG_FIELDS:
+            value = config[key]
+            if value is None or value == "":
                 raise InvalidServiceConfigException(
-                    f"service configuration missing field '{config_field_name}'"
-                )
-
-            config_value = config[config_field_name]
-            if config_value is None or config_value == "":
-                raise InvalidServiceConfigException(
-                    f"service configuration missing value for field '{config_field_name}'"
+                    f"service configuration missing value for field '{key}'"
                 )
 
     def get_name(self) -> ServiceName:
@@ -65,12 +60,8 @@ class ServiceInterface(Protocol):
         return False
 
 
-class PriceOracleInterface(ServiceInterface):
+class PriceOracleInterface(ABC):
     __asset_pairs__: AssetPairs
-
-    def __init__(self, config: ServiceConfig, log: Logger) -> None:
-        super().__init__(config=config, log=log)
-        self.__asset_pairs__ = {}
 
     def supported_asset_pairs(self) -> AssetPairs:
         return self.__asset_pairs__
@@ -95,15 +86,11 @@ class PriceOracleInterface(ServiceInterface):
         pass
 
 
-class BalanceServiceInterface(ServiceInterface):
-    def __init__(self, config: ServiceConfig, log: Logger) -> None:
-        super().__init__(config=config, log=log)
+class BalanceServiceInterface(ABC):
+    pass
 
 
-class BalanceProviderInterface(BalanceServiceInterface):
-    def __init__(self, config: ServiceConfig, log: Logger) -> None:
-        super().__init__(config=config, log=log)
-
+class BalanceProviderInterface(BalanceServiceInterface, ABC):
     # @abstractmethod
     # def balance_at(self, asset_id: AssetID, timestamp_unix_seconds: int) -> AssetBalanceAtTime:
     #     pass
@@ -113,11 +100,8 @@ class BalanceProviderInterface(BalanceServiceInterface):
         pass
 
 
-class BalanceOracleInterface(BalanceServiceInterface):
+class BalanceOracleInterface(BalanceServiceInterface, ABC):
     __supported_address_types: set[AddressType]
-
-    def __init__(self, config: ServiceConfig, log: Logger) -> None:
-        super().__init__(config=config, log=log)
 
     @abstractmethod
     def supported_address_types(self) -> set[AddressType]:
