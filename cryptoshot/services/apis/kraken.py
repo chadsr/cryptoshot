@@ -49,7 +49,7 @@ OFFSET_TIMESTAMP_SECONDS = 60
 # Offset cumulative limit to stop searching at and return an exception
 OFFSET_TIMESTAMP_MAX_SECONDS = 3600
 
-WAIT_TIME_INCREMENT_SECONDS = 5
+WAIT_TIME_INCREMENT_SECONDS: float = 12.0
 
 KrakenAssetID: TypeAlias = str
 
@@ -355,8 +355,8 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
         url = f"{self.__base_url_api_public}/Trades"
 
         asset_value_at_time: AssetValueAtTime | None = None
-        offset_timestamp_unix_seconds = timestamp_unix_seconds
-        wait_time_seconds = 0
+        offset_timestamp_unix_seconds: int = timestamp_unix_seconds
+        wait_time_seconds: float = 0
         while asset_value_at_time is None:
             if (
                 timestamp_unix_seconds - offset_timestamp_unix_seconds
@@ -385,6 +385,7 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
                     self.__log__.debug(
                         f"No trades found between {offset_timestamp_unix_seconds} -> {timestamp_unix_seconds}"
                     )
+                    offset_timestamp_unix_seconds -= OFFSET_TIMESTAMP_SECONDS
                     continue
 
                 # Store the current closest values to timestamp_unix_seconds
@@ -433,6 +434,16 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
                     offset_timestamp_unix_seconds -= OFFSET_TIMESTAMP_SECONDS
                     continue
 
+            except TooManyRequestsException as e:
+                # Respect server-provided retry delay when available
+                if e.retry_after_seconds is not None:
+                    self.__wait_requests(e.retry_after_seconds)
+                    # After a successful wait on Retry-After, reset incremental backoff
+                    wait_time_seconds = 0
+                else:
+                    wait_time_seconds += WAIT_TIME_INCREMENT_SECONDS
+                    self.__wait_requests(wait_time_seconds)
+                continue
             except RequestException as e:
                 if e.error_messages:
                     if (
@@ -444,9 +455,6 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
                         continue
 
                 raise PriceOracleException(e) from e
-
-        if asset_value_at_time is None:
-            raise PriceOracleException("no asset value found")
 
         return asset_value_at_time
 
