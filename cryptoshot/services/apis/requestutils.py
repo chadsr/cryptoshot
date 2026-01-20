@@ -1,5 +1,8 @@
 from collections.abc import Mapping
 import requests
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+from requests.structures import CaseInsensitiveDict
 
 from ...services.types import JSON, HttpHeaders
 
@@ -18,6 +21,30 @@ HEADERS_URL_ENCODED = {
 RESPONSE_ERROR_KEYS = ["error", "errors"]
 
 DEFAULT_TIMEOUT: tuple[float, float] = (5.0, 10.0)
+
+
+def _parse_retry_after(headers: CaseInsensitiveDict[str]) -> float | None:
+    val = headers.get("Retry-After")
+    if not val:
+        return None
+    # Two forms per RFC 7231: delta-seconds or HTTP-date
+    try:
+        # Try delta-seconds
+        secs = float(val)
+        if secs < 0:
+            return None
+        return secs
+    except ValueError:
+        pass
+    try:
+        dt = parsedate_to_datetime(val)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
+        delta = (dt - now).total_seconds()
+        return max(0.0, delta)
+    except Exception:
+        return None
 
 
 def validate_response(response: requests.Response):
@@ -39,6 +66,7 @@ def validate_response(response: requests.Response):
         status_code = response.status_code
         result = response_json
         error_messages = error_msgs
+        headers = dict(response.headers)
 
         match status_code:
             case 429:
@@ -47,6 +75,8 @@ def validate_response(response: requests.Response):
                     status_code=status_code,
                     result=result,
                     error_messages=error_messages,
+                    headers=headers,
+                    retry_after_seconds=_parse_retry_after(response.headers),
                 )
             case _:
                 raise RequestException(
@@ -54,6 +84,7 @@ def validate_response(response: requests.Response):
                     status_code=status_code,
                     result=result,
                     error_messages=error_messages,
+                    headers=headers,
                 )
 
 
