@@ -151,14 +151,14 @@ def test_all_balances_at_returns_separate_p_and_x_chain_totals(
 
     assert bal_p["asset"]["id"] == symbol
     assert bal_p["asset"]["name"] == f"{name} (P-Chain)"
-    assert bal_p["asset"]["decimals"] == denom
-    assert bal_p["asset"]["service_asset_id"] == asset_id
+    assert bal_p["asset"].get("decimals") == denom
+    assert bal_p["asset"].get("service_asset_id") == asset_id
     assert bal_p["timestamp"] == ts
     assert bal_p["quantity"] == expected_quantity_p
 
     assert bal_x["asset"]["id"] == symbol
     assert bal_x["asset"]["name"] == f"{name} (X-Chain)"
-    assert bal_x["asset"]["decimals"] == denom
-    assert bal_x["asset"]["service_asset_id"] == asset_id
+    assert bal_x["asset"].get("decimals") == denom
+    assert bal_x["asset"].get("service_asset_id") == asset_id
     assert bal_x["timestamp"] == ts
     assert bal_x["quantity"] == expected_quantity_x
