@@ -11,6 +11,7 @@ ServiceName: TypeAlias = str
 ServiceAssetID: TypeAlias = str
 Address: TypeAlias = str
 BlockNumber: TypeAlias = int
+EpochNumber: TypeAlias = int
 
 
 class AddressType(StrEnum):
@@ -19,6 +20,7 @@ class AddressType(StrEnum):
     EVM = "evm"
     POLKADOT = "dot"
     KUSAMA = "ksm"
+    ETH_VALIDATOR = "eth_validator"
 
 
 class AccountAddress(TypedDict):
@@ -32,6 +34,7 @@ class ServiceType(StrEnum):
     KRAKEN = "kraken"
     ROUTESCAN = "routescan"
     AVAX_NETWORK = "avax_network"
+    BEACONCHAIN = "beaconchain"
 
 
 class AssetType(StrEnum):
@@ -87,6 +90,7 @@ class AssetBalance(TypedDict):
 class AssetBalanceAtTime(AssetBalance):
     timestamp: int
     last_block_number: NotRequired[BlockNumber]
+    epoch_number: NotRequired[EpochNumber]
 
 
 Assets: TypeAlias = dict[AssetID, Asset]
