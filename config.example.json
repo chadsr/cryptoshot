@@ -3,13 +3,19 @@
         {"name": "kraken1", "type": "kraken", "api_token": "apitoken", "private_key": "privatekey"},
         {"name": "coinapi1", "type": "coinapi", "api_token": "apitokenn"},
         {"name": "coingecko1", "type": "coingecko", "api_token": "apitoken"},
-        {"name": "routescan1", "type": "routescan", "api_token": "N/A"}
+        {"name": "routescan1", "type": "routescan", "api_token": "N/A"},
+        {"name": "beaconchain1", "type": "beaconchain", "api_token": "beaconchain-api-key"}
     ],
     "accounts": [
         {
             "name": "MyAccount",
             "address": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
             "type": "evm"
+        },
+        {
+            "name": "MyValidator",
+            "address": "0xa1d1ad0714035353258038e964ae9675dc0252ee22cea896825c01458e1807bfad2f9969338798548d9858a571f7425c",
+            "type": "eth_validator"
         }
     ],
     "assets": {
