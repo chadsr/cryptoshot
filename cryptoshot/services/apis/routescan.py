@@ -39,6 +39,9 @@ from .requestutils import HEADERS_JSON, get_json_request, post_json_request
 ROUTESCAN_API_BASE_URL = "https://api.routescan.io/v2"
 # ROUTESCAN_CDN_BASE_URL = "https://cdn.routescan.io"
 
+REQUESTS_PER_SECOND = 0.5
+REQUEST_TIMEOUT = 30
+
 
 class RoutescanNetworkType(StrEnum):
     MAINNET = "mainnet"
@@ -107,9 +110,6 @@ class ParamsRoutescanEtherscanApi(TypedDict):
     apikey: NotRequired[str]
 
 
-REQUESTS_PER_SECOND = 2
-
-
 class RoutescanAPI(EvmBalanceOracleApiInterface):
     def __init__(
         self,
@@ -173,12 +173,16 @@ class RoutescanAPI(EvmBalanceOracleApiInterface):
         params: str | bytes | dict[str, Any] | None = None,
     ) -> JSON:
         self.__wait_for_request()
-        res_json = get_json_request(url=url, params=params, headers=self.__auth_headers)
+        res_json = get_json_request(
+            url=url, params=params, headers=self.__auth_headers, timeout=REQUEST_TIMEOUT
+        )
         return res_json
 
     def __post_json_request_wait(self, url: str, json: JSON):
         self.__wait_for_request()
-        res_json = post_json_request(url=url, json=json, headers=self.__auth_headers)
+        res_json = post_json_request(
+            url=url, json=json, headers=self.__auth_headers, timeout=REQUEST_TIMEOUT
+        )
         return res_json
 
     def __get_supported_chains(self) -> dict[EVMChainID, EVMChain]:
