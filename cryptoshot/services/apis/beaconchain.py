@@ -1,5 +1,6 @@
 from collections.abc import Mapping
 from logging import Logger
+from time import sleep
 from typing import TypedDict, override
 
 from .interfaces import BalanceOracleApiInterface
@@ -30,6 +31,9 @@ API_BASE = "https://beaconcha.in/api/v2"
 API_BALANCES_ENDPOINT = f"{API_BASE}/ethereum/validators/balances"
 ETH_DECIMALS = 18
 
+MAX_RETRIES = 3
+RETRY_WAIT_SECONDS = 5
+
 
 class BeaconchainBalanceEntry(TypedDict):
     """Parsed balance entry from the Beaconcha.in V2 API response."""
@@ -38,6 +42,8 @@ class BeaconchainBalanceEntry(TypedDict):
     public_key: str
     balance_wei: int
     effective_wei: int
+    timestamp_start: int
+    timestamp_end: int
 
 
 def _timestamp_to_epoch(ts: int) -> int:
@@ -79,11 +85,29 @@ def _extract_balance(response: JSONDict, validator: str | int) -> BeaconchainBal
             "Unexpected response format: expected int index and str public_key"
         )
 
+    range = response.get("range")
+    if not isinstance(range, Mapping):
+        raise BalanceOracleException("Unexpected response format: expected range mapping entry")
+
+    timestamp_json = range.get("timestamp")
+    if not isinstance(timestamp_json, Mapping):
+        raise BalanceOracleException("Unexpected response format: expected timestamp mapping")
+
+    timestamp_start = timestamp_json.get("start")
+    if not isinstance(timestamp_start, int):
+        raise BalanceOracleException("Unexpected response format: expected int timestamp values")
+
+    timestamp_end = timestamp_json.get("end")
+    if not isinstance(timestamp_end, int):
+        raise BalanceOracleException("Unexpected response format: expected int timestamp values")
+
     return BeaconchainBalanceEntry(
         index=index_val,
         public_key=pubkey_val,
         balance_wei=int(current),
         effective_wei=int(effective),
+        timestamp_start=timestamp_start,
+        timestamp_end=timestamp_end,
     )
 
 
@@ -126,16 +150,11 @@ class BeaconchainAPI(BalanceOracleApiInterface):
             "epoch": epoch,
         }
 
-        try:
-            res_json = post_json_request(
-                url=API_BALANCES_ENDPOINT,
-                json=body,
-                headers=self.__headers,
-            )
-        except RequestException as e:
-            raise BalanceOracleException(
-                f"Beaconcha.in API request failed for validator {validator} at epoch {epoch}: {e}"
-            ) from e
+        res_json = post_json_request(
+            url=API_BALANCES_ENDPOINT,
+            json=body,
+            headers=self.__headers,
+        )
 
         if not isinstance(res_json, Mapping):
             raise BalanceOracleException("Unexpected response format: expected mapping")
@@ -157,9 +176,23 @@ class BeaconchainAPI(BalanceOracleApiInterface):
             f"(timestamp {timestamp_unix_seconds})"
         )
 
-        result = self.__fetch_validator_balance(validator=address, epoch=epoch)
+        balance_result: BeaconchainBalanceEntry | None = None
+        retries = 0
+        while balance_result is None and retries < MAX_RETRIES:
+            try:
+                balance_result = self.__fetch_validator_balance(validator=address, epoch=epoch)
+            except RequestException as e:
+                retries += 1
+                if retries == MAX_RETRIES:
+                    raise e
 
-        balance_eth = result["balance_wei"] / 10**ETH_DECIMALS
+                sleep(RETRY_WAIT_SECONDS)
+                continue
+
+        if not balance_result:
+            raise NoBalancesFoundException("No balance found after %d retries", retries)
+
+        balance_eth: float = balance_result["balance_wei"] / 10**ETH_DECIMALS
 
         if balance_eth == 0:
             raise NoBalancesFoundException(f"Validator {address} has zero balance at epoch {epoch}")
@@ -175,7 +208,8 @@ class BeaconchainAPI(BalanceOracleApiInterface):
                 address: {
                     "asset": asset,
                     "quantity": balance_eth,
-                    "timestamp": timestamp_unix_seconds,
+                    "epoch_number": epoch,
+                    "timestamp": balance_result["timestamp_start"],
                 }
             }
         }

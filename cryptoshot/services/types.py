@@ -11,6 +11,7 @@ ServiceName: TypeAlias = str
 ServiceAssetID: TypeAlias = str
 Address: TypeAlias = str
 BlockNumber: TypeAlias = int
+EpochNumber: TypeAlias = int
 
 
 class AddressType(StrEnum):
@@ -89,6 +90,7 @@ class AssetBalance(TypedDict):
 class AssetBalanceAtTime(AssetBalance):
     timestamp: int
     last_block_number: NotRequired[BlockNumber]
+    epoch_number: NotRequired[EpochNumber]
 
 
 Assets: TypeAlias = dict[AssetID, Asset]
