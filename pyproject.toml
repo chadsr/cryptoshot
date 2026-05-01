@@ -19,7 +19,7 @@ cryptoshot = "cryptoshot.__main__:main"
 dev = [
   "pytest>=9.0.3",
   "pytest-cov>=7.0.0",
-  "ruff>=0.14.10",
+  "ruff>=0.15.12",
   "pre-commit>=4.5.1",
 ]
 
