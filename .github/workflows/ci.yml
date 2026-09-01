@@ -20,7 +20,7 @@ jobs:
       - name: Sync dependencies (all groups)
         run: uv sync --all-groups
       - name: Pre-Commit
-        uses: j178/prek-action@v2.0.6
+        uses: j178/prek-action@v3.0.0
         with:
           extra-args: "--all-files"
 
