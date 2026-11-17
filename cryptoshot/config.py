@@ -12,5 +12,5 @@ def load_config(config_path: str) -> Config:
             # TODO: check required fields are valid
 
             return config
-    except Exception as e:
+    except (OSError, json.JSONDecodeError) as e:
         raise LoadConfigException(e)

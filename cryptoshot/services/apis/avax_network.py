@@ -1,10 +1,10 @@
 from enum import StrEnum
 from logging import Logger
-from typing import TypedDict, NotRequired, cast, override
+from typing import NotRequired, TypedDict, cast, override
 
-from ...services.apis.requestutils import HEADERS_JSON, get_json_request
-from ...services.apis.interfaces import BalanceOracleApiInterface
 from ...services.apis.exceptions import RequestException
+from ...services.apis.interfaces import BalanceOracleApiInterface
+from ...services.apis.requestutils import HEADERS_JSON, get_json_request
 from ...services.exceptions import (
     BalanceOracleException,
     NoBalancesFoundException,
@@ -202,7 +202,7 @@ class AvaxNetworkAPI(BalanceOracleApiInterface):
         def add_chain_totals(
             source: dict[str, tuple[ResponseAssetAmount, int]], chain_label: str
         ) -> None:
-            for _, (entry_sample, total_amount_smallest) in source.items():
+            for entry_sample, total_amount_smallest in source.values():
                 if total_amount_smallest == 0:
                     continue
 

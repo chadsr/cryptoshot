@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from logging import Logger
 from typing import Literal
 
+from .exceptions import InvalidServiceConfigException
 from .types import (
     AccountAddress,
     AddressType,
@@ -14,7 +15,6 @@ from .types import (
     ServiceName,
     ServiceType,
 )
-from .exceptions import InvalidServiceConfigException
 
 REQUIRED_CONFIG_FIELDS: tuple[Literal["type", "name"], ...] = ("type", "name")
 
@@ -54,10 +54,7 @@ class ServiceInterface(ABC):
 
     def asset_supported(self, asset_id: AssetID) -> bool:
         # TODO: normalise assetID casing (casefold) before storing
-        if asset_id.upper() in self.__assets__ or asset_id.casefold() in self.__assets__:
-            return True
-
-        return False
+        return asset_id.upper() in self.__assets__ or asset_id.casefold() in self.__assets__
 
 
 class PriceOracleInterface(ABC):

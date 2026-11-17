@@ -3,15 +3,6 @@ from logging import Logger
 from types import MappingProxyType
 from typing import TypeAlias, TypedDict, cast
 
-from ...services.utils import unix_timestamp_seconds_from_int
-from ...services.types import (
-    ApiConfig,
-    AssetID,
-    Assets,
-    AssetPairs,
-    AssetValueAtTime,
-    HttpHeaders,
-)
 from ...services.exceptions import (
     NoSupportedAssetsException,
     NoSupportedAssetsPairsException,
@@ -20,9 +11,17 @@ from ...services.exceptions import (
     UnsupportedAssetIDException,
     UnsupportedQuoteAssetIDException,
 )
-
-from .interfaces import PriceOracleApiInterface
+from ...services.types import (
+    ApiConfig,
+    AssetID,
+    AssetPairs,
+    Assets,
+    AssetValueAtTime,
+    HttpHeaders,
+)
+from ...services.utils import unix_timestamp_seconds_from_int
 from .exceptions import ApiRateLimitException, RequestException, TooManyRequestsException
+from .interfaces import PriceOracleApiInterface
 from .requestutils import HEADERS_JSON, get_json_request
 
 COINGECKO_API_BASE_URL = "https://api.coingecko.com/api/v3"
@@ -169,7 +168,7 @@ class CoinGeckoAPI(PriceOracleApiInterface):
             res_currencies = cast(ResponseCurrencies, res_currencies)
 
             for asset_id in assets:
-                available_asset_pairs[asset_id] = set([c.casefold() for c in res_currencies])
+                available_asset_pairs[asset_id] = {c.casefold() for c in res_currencies}
 
                 if asset_id in available_asset_pairs[asset_id]:
                     # remove asset_id/asset_id 1-1 pairing
@@ -244,8 +243,10 @@ class CoinGeckoAPI(PriceOracleApiInterface):
                     status_obj = error_obj.get("status")
                     if isinstance(status_obj, dict):
                         error_code = status_obj.get("error_code")
-                        if isinstance(error_code, int):
-                            if error_code == CoinGeckoErrorCode.EXCEEDS_TIME_RANGE:
-                                raise NoValueFoundException("Available time range exceeded")
+                        if (
+                            isinstance(error_code, int)
+                            and error_code == CoinGeckoErrorCode.EXCEEDS_TIME_RANGE
+                        ):
+                            raise NoValueFoundException("Available time range exceeded")
 
             raise PriceOracleException(e)

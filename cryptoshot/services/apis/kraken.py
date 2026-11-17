@@ -1,13 +1,13 @@
-import time
-from collections.abc import Mapping
-from enum import StrEnum
-from types import MappingProxyType
-from typing import NamedTuple, NotRequired, TypedDict, TypeAlias, cast
-from logging import Logger
-import urllib.parse
+import base64
 import hashlib
 import hmac
-import base64
+import time
+import urllib.parse
+from collections.abc import Mapping
+from enum import StrEnum
+from logging import Logger
+from types import MappingProxyType
+from typing import NamedTuple, NotRequired, TypeAlias, TypedDict, cast
 
 from ...services.exceptions import (
     BalanceProviderException,
@@ -29,14 +29,13 @@ from ...services.types import (
     AssetValueAtTime,
     HttpHeaders,
 )
-
-from .interfaces import BalanceProviderApiInterface, PriceOracleApiInterface
 from .exceptions import (
     InvalidAPIConfigException,
     InvalidAPIKeyException,
     RequestException,
     TooManyRequestsException,
 )
+from .interfaces import BalanceProviderApiInterface, PriceOracleApiInterface
 from .requestutils import HEADERS_JSON, HEADERS_URL_ENCODED, get_json_request, post_json_request
 
 KRAKEN_API_BASE_URL = "https://api.kraken.com"
@@ -114,7 +113,7 @@ class KrakenLedgerAssetSuffix(StrEnum):
 
 class ResponseAsset(TypedDict):
     aclass: str
-    altname: AssetID | AssetID
+    altname: AssetID
     decimals: int
 
 
@@ -379,7 +378,7 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
                 # successful request, so reset wait time
                 wait_time_seconds = 0
 
-                pair_key = list(res_trades_json["result"].keys())[0]
+                pair_key = next(iter(res_trades_json["result"]))
                 trades_obj = res_trades_json["result"][pair_key]
                 if len(trades_obj) == 0:
                     self.__log__.debug(
@@ -445,14 +444,13 @@ class KrakenAPI(BalanceProviderApiInterface, PriceOracleApiInterface):
                     self.__wait_requests(wait_time_seconds)
                 continue
             except RequestException as e:
-                if e.error_messages:
-                    if (
-                        KrakenResponseError.TOO_MANY_REQUESTS in e.error_messages
-                        or KrakenResponseError.RATE_LIMIT_EXCEEDED in e.error_messages
-                    ):
-                        wait_time_seconds += WAIT_TIME_INCREMENT_SECONDS
-                        self.__wait_requests(wait_time_seconds)
-                        continue
+                if e.error_messages and (
+                    KrakenResponseError.TOO_MANY_REQUESTS in e.error_messages
+                    or KrakenResponseError.RATE_LIMIT_EXCEEDED in e.error_messages
+                ):
+                    wait_time_seconds += WAIT_TIME_INCREMENT_SECONDS
+                    self.__wait_requests(wait_time_seconds)
+                    continue
 
                 raise PriceOracleException(e) from e
 

@@ -1,15 +1,14 @@
-from logging import Logger
 from abc import ABC
+from logging import Logger
 
-
-from ..types import ApiConfig
 from ..exceptions import InvalidApiConfigException
 from ..interfaces import (
     BalanceOracleInterface,
-    PriceOracleInterface,
     BalanceProviderInterface,
+    PriceOracleInterface,
     ServiceInterface,
 )
+from ..types import ApiConfig
 
 
 class ApiInterface(ServiceInterface):

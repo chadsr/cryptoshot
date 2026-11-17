@@ -1,11 +1,11 @@
 from collections.abc import Mapping
-import requests
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
+
+import requests
 from requests.structures import CaseInsensitiveDict
 
 from ...services.types import JSON, HttpHeaders
-
 from .exceptions import RequestException, TooManyRequestsException
 
 HEADERS_JSON: HttpHeaders = {
@@ -39,11 +39,11 @@ def _parse_retry_after(headers: CaseInsensitiveDict[str]) -> float | None:
     try:
         dt = parsedate_to_datetime(val)
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        now = datetime.now(timezone.utc)
+            dt = dt.replace(tzinfo=UTC)
+        now = datetime.now(UTC)
         delta = (dt - now).total_seconds()
         return max(0.0, delta)
-    except Exception:
+    except (TypeError, ValueError):
         return None
 
 
@@ -57,9 +57,12 @@ def validate_response(response: requests.Response):
                 error_obj = response_json[error_key]
                 if isinstance(error_obj, list) and len(error_obj) > 0:
                     error_msgs.extend([str(error_msg) for error_msg in error_obj])
-                elif isinstance(error_obj, dict) and len(error_obj) > 0:
-                    error_msgs.append(error_obj)
-                elif isinstance(error_obj, str) and len(error_obj) > 0:
+                elif (
+                    isinstance(error_obj, dict)
+                    and len(error_obj) > 0
+                    or isinstance(error_obj, str)
+                    and len(error_obj) > 0
+                ):
                     error_msgs.append(error_obj)
 
     if len(error_msgs) > 0 or response.status_code != 200:

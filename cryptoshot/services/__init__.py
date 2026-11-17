@@ -1,14 +1,13 @@
 from types import MappingProxyType
 
-from .interfaces import ServiceInterface
-from .types import ServiceType
-
+from .apis.avax_network import AvaxNetworkAPI
+from .apis.beaconchain import BeaconchainAPI
 from .apis.coinapi import CoinAPI
 from .apis.coingecko import CoinGeckoAPI
 from .apis.kraken import KrakenAPI
 from .apis.routescan import RoutescanAPI
-from .apis.avax_network import AvaxNetworkAPI
-from .apis.beaconchain import BeaconchainAPI
+from .interfaces import ServiceInterface
+from .types import ServiceType
 
 SERVICES: MappingProxyType[ServiceType, type[ServiceInterface]] = MappingProxyType(
     {

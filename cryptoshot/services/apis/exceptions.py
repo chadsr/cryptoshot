@@ -1,5 +1,5 @@
-from ..types import JSON
 from ..exceptions import ServiceException
+from ..types import JSON
 
 
 class ApiException(ServiceException):
