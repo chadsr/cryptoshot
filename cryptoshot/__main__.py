@@ -1,16 +1,15 @@
-import logging
 import argparse
+import logging
 import sys
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from .__init__ import __version__, __description__
-from .utils import dict_to_json, prices_to_csv, timezones, unix_timestamp_seconds_from_str
-from .cryptoshot import Cryptoshot
+from .__init__ import __description__, __version__
 from .config import load_config
-from .logger import LOGGER, LoggerAdapter
+from .cryptoshot import Cryptoshot
 from .exceptions import CryptoshotException
-
+from .logger import LOGGER, LoggerAdapter
+from .utils import dict_to_json, prices_to_csv, timezones, unix_timestamp_seconds_from_str
 
 DEFAULT_CONFIG_PATH = "./config.json"
 DEFAULT_DATETIME_STRING_FORMAT: str = "%d-%m-%Y/%H:%M:%S"
@@ -81,8 +80,8 @@ def get(args: argparse.Namespace) -> None:
                 csv_path = f"{prices_file_path}_{file_path_format}.csv"
                 prices_to_csv(prices, csv_path)
 
-    except CryptoshotException as e:
-        log.logger.exception(e)
+    except CryptoshotException:
+        log.logger.exception("Execution failed")
         sys.exit(1)
 
 

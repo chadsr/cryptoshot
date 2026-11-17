@@ -3,9 +3,6 @@ from logging import Logger
 from time import sleep
 from typing import TypedDict, override
 
-from .interfaces import BalanceOracleApiInterface
-from .requestutils import post_json_request
-from .exceptions import RequestException
 from ..exceptions import (
     BalanceOracleException,
     NoBalancesFoundException,
@@ -20,6 +17,9 @@ from ..types import (
     HttpHeaders,
     JSONDict,
 )
+from .exceptions import RequestException
+from .interfaces import BalanceOracleApiInterface
+from .requestutils import post_json_request
 
 # Ethereum mainnet beacon chain constants
 GENESIS_TIME = 1_606_824_023
@@ -181,10 +181,10 @@ class BeaconchainAPI(BalanceOracleApiInterface):
         while balance_result is None and retries < MAX_RETRIES:
             try:
                 balance_result = self.__fetch_validator_balance(validator=address, epoch=epoch)
-            except RequestException as e:
+            except RequestException:
                 retries += 1
                 if retries == MAX_RETRIES:
-                    raise e
+                    raise
 
                 sleep(RETRY_WAIT_SECONDS)
                 continue

@@ -1,6 +1,6 @@
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
-from typing import TypeAlias, TypedDict, NotRequired
+from typing import NotRequired, TypeAlias, TypedDict
 
 HttpHeaders: TypeAlias = Mapping[str, str | bytes | None]
 JSON: TypeAlias = Mapping[str, "JSON"] | Sequence["JSON"] | str | int | float | bool | None
@@ -94,7 +94,7 @@ class AssetBalanceAtTime(AssetBalance):
 
 
 Assets: TypeAlias = dict[AssetID, Asset]
-AssetPairs: TypeAlias = dict[AssetID, set[AssetID | AssetID]]
+AssetPairs: TypeAlias = dict[AssetID, set[AssetID]]
 
 AssetValuesAtTime = dict[AssetID, AssetValueAtTime]
 AssetBalancesAtTime = dict[AssetID, dict[ServiceAssetID | Address, AssetBalanceAtTime]]

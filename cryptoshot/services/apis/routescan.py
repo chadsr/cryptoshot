@@ -1,7 +1,7 @@
+import time
 from enum import StrEnum
 from logging import Logger
-import time
-from typing import NotRequired, TypedDict, cast, Any
+from typing import Any, NotRequired, TypedDict, cast
 
 from ...services.constants import EVM_BASE_ASSET_DECIMALS
 from ...services.exceptions import (
@@ -27,13 +27,12 @@ from ...services.types import (
     EVMChainID,
     HttpHeaders,
 )
-
-from .interfaces import EvmBalanceOracleApiInterface
 from .exceptions import (
     ApiException,
     ApiUnavailableException,
     RequestException,
 )
+from .interfaces import EvmBalanceOracleApiInterface
 from .requestutils import HEADERS_JSON, get_json_request, post_json_request
 
 ROUTESCAN_API_BASE_URL = "https://api.routescan.io/v2"
@@ -143,7 +142,7 @@ class RoutescanAPI(EvmBalanceOracleApiInterface):
 
         self.__selected_chain_ids: set[EVMChainID] = set()
 
-        for chain_id in self.__supported_chains.keys():
+        for chain_id in self.__supported_chains:
             if self.__exclude_chain_ids__ and chain_id in self.__exclude_chain_ids__:
                 continue
 

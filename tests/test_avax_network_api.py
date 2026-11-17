@@ -1,9 +1,10 @@
 import logging
 from typing import Any
+
 import pytest
 
 from cryptoshot.services.apis.avax_network import AvaxNetworkAPI
-from cryptoshot.services.types import ApiConfig, ServiceType, AddressType, AccountAddress
+from cryptoshot.services.types import AccountAddress, AddressType, ApiConfig, ServiceType
 
 
 @pytest.fixture
@@ -116,7 +117,7 @@ def test_all_balances_at_returns_separate_p_and_x_chain_totals(
         "chainInfo": {"chainName": "x-chain", "network": "mainnet"},
     }
 
-    def fake_get_json_request(url: str, params=None, headers=None, timeout=10):  # noqa: ARG001
+    def fake_get_json_request(url: str, params=None, headers=None, timeout=10):
         if "/p-chain/" in url:
             return p_chain_response
         if "/x-chain/" in url:

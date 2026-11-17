@@ -1,4 +1,4 @@
-from typing import TypedDict, TypeAlias
+from typing import TypeAlias, TypedDict
 
 from .services.types import (
     AccountAddress,

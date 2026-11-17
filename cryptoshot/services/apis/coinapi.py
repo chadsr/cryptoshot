@@ -1,6 +1,6 @@
+from datetime import datetime
 from enum import IntEnum
 from logging import Logger
-from datetime import datetime
 from typing import TypeAlias, TypedDict, cast
 from zoneinfo import ZoneInfo
 
@@ -16,9 +16,8 @@ from ...services.types import (
     AssetValueAtTime,
     HttpHeaders,
 )
-
-from .interfaces import PriceOracleApiInterface
 from .exceptions import ApiRateLimitException, RequestException, TooManyRequestsException
+from .interfaces import PriceOracleApiInterface
 from .requestutils import HEADERS_JSON, get_json_request
 
 COINAPI_BASE_URL = "https://rest.coinapi.io/v1"
